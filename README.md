@@ -94,3 +94,20 @@ Los logs pues son los logs que puedes ver desde tu dashboard de flink
 
 
 Siii, si tiene su curva de aprendizaje :p
+
+Entonces source es lo que va recibiendo de la fuente de datos, el pipeline o job aborda los operators, y las transformaciones 
+
+<img width="1703" height="1406" alt="image" src="https://github.com/user-attachments/assets/ba7964c5-a734-44e7-970e-72b6d8d55951" />
+
+Y sink guarda o redirecciona. Es la capa del transform. Puntos sobre los que tuve duda y aclaro aquí:
+
+*El sink y posterior se encarga de procesar duplicados, esto porque flink no lo detecta, importante
+si fluye el source desde kafka y reiniciar el offset.
+
+*En el momento que tu enciendes la canalización de tus datos, tu start, ya debes definir en sink, puesto que tus datos
+no viven dentro de flink, solo los procesa. Si quieres guardarlos debes definir tu sink.
+
+*Hay procesing time y event time, en prod se usa event time siempre ya que es más preciso.
+
+*Las funciones window te ayudan a mantener el orden pero sobre todo, en un stram infinito te ayudan a "batchear" en el save
+de acuerdo a intervalos de tiempo.
