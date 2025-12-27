@@ -40,3 +40,57 @@ Pero esto no desmerita los procesos old school, unos economizan costos y va de a
 es para temas de otra liga...
 
 Ahora, procederé a empaparme de la info de su api de flink. Entendiendo las bases ahora ya sabes porque se usan estas herramientas.
+
+# Primeros avances
+Aprender sobre las diferencias entre los diferentes tipos de arranque del flink
+
+<img width="1240" height="1074" alt="image" src="https://github.com/user-attachments/assets/327e27a8-4526-4eef-8586-11fc89d0989f" />
+
+Lo que sé es que la persistencia de los procesados se puede dar en memoria o por medio de rocksDB que persiste los datos
+segmentados en disco hasta cierto limite. 
+
+CREATE TABLE Orders (
+    order_number BIGINT,
+    price        DECIMAL(32,2),
+    buyer        ROW<first_name STRING, last_name STRING>,
+    order_time   TIMESTAMP(3)
+) WITH (
+  'connector' = 'datagen',
+  'rows-per-second' = '10',
+  'number-of-rows' = '100'
+);
+
+
+Ok.... los fundamentos si están con una curva alta, aun con la IA porque me gusta ver si algo que aparece ahi está en la documentación y ver como lo describen ahí.
+
+Ok, para esto primero empezamos con flink SQL, es un gestor de vistas que nos permite manipular y crear consultas con los datos del stream que pasan en memoria. 
+Entonces, hay el concepto de la consulta y el SINK, este último es la definición de a donde van tus datos transformados y procesados. 
+
+Creas una tabla demo que es la definición de como llega tu dato. Y el SINK es el como lo procesas.
+
+<img width="1778" height="544" alt="image" src="https://github.com/user-attachments/assets/a9528f37-d8bd-4c32-9616-f696052327b8" />
+
+Aquí creo la tabla orders y como connector pongo 'datagen', uno de los tantos connectors que existen:
+
+<img width="508" height="1027" alt="image" src="https://github.com/user-attachments/assets/b028c960-2df3-4e8f-981a-2a6ec2cc6d2c" />
+
+Datagen genera datos aleatorios para probar tus procesados. 
+
+Entonces al crear un insert into saving_ex select count(*) saving_count,buyer from Orders group by buyer;, lo que haces es que los datos que vienen del connector anexado
+a la tabla receiver por asi llamarla, se van agregando al SINK, es decir guardarlos. Se guardan rápidon.
+create table saving_ex(saving_count bigint, buyer ROW<first_name STRING, last_name STRING>) with ('connector'= 'print');
+
+En este caso nuestro otro conector es el print, es decir lo imprime en los logs y ya. Esto es para pruebas, y puedes observar en vivo como se populan los datos
+
+<img width="1913" height="1079" alt="image" src="https://github.com/user-attachments/assets/15b5c44c-c4e6-4c6c-97ba-f910d07c3888" />
+
+Los archivos out son donde van tus print
+
+<img width="1426" height="196" alt="image" src="https://github.com/user-attachments/assets/1c319cc5-3723-4f4a-a089-a911adc6976e" />
+
+Los logs pues son los logs que puedes ver desde tu dashboard de flink 
+
+<img width="2162" height="1322" alt="image" src="https://github.com/user-attachments/assets/3aee723c-8d73-4939-8e09-53bb7f4d6ac4" />
+
+
+Siii, si tiene su curva de aprendizaje :p
