@@ -122,3 +122,37 @@ Estas fechas son conocidas como time attributes y debes declararlos al hacer tus
 Hay dos tipos: processing time que son calculados por el System.currentTimeMilis(); y los evenmt time, los que vienen en tus datos.
 
 .... tengo que leer la docu con calma, los windows si quiero entenderlos bien
+
+Con ayuda de master gpt y leyendo la docu ya entendí. Todo recae en unos conceptos que no son explicitos a simple vista.
+
+Las ventanas son agrupaciones en streams infinitos, no puedes hacer un count(*) en el processing cuando algo no termina.
+Entonces agrupas ventanaas por minuto, hora, dia, semana. Son como cortes, pero en pleno stream. 
+
+WINDOW: Rango de datos, count o por intervals
+
+<img width="1187" height="587" alt="image" src="https://github.com/user-attachments/assets/07cc0fc5-7997-4213-8a73-6a4f3a380b6d" />
+
+WATERMARK: 
+Este concepto si me costó un guebo absorverlo, pero lo explicaré lo mejor que pueda.
+En streams sin orden, puede que por timestamp los eventos vengan desordenados como se muestra en su docu oficial:
+
+<img width="1202" height="735" alt="image" src="https://github.com/user-attachments/assets/77bc0556-ad3d-4788-aaaf-d75a97039d20" />
+
+Y quieres tu, recibir o consultar en tu sink eventos por cada hora digamos, de 10 a 11, te llega 10:01, 10:30,10:02, 10:50, 11:03,10:32
+
+tu en tu ddl definirias por ejemplo esto: WATERMARK FOR event_time AS event_time - 5 MINUTES
+
+Singifica que al row actual va a restarle 5 minutos al tiempo, y calcular que esa resta esté dentro de la ventana de tiempo existente.
+En el anterior ejemplo hay un 11:03, - 5 minutos da 10:58, por lo tanto flink aún no cierra la ventana y sigue con el 10:32 -5, y así, 
+porque pueden venir en desorden. Y vas agrupando tus eventos conforme llegan, guardandolos en tu sink o procesandolos con sort.
+
+SII, BUENA DUDA Y TAMBIÉN LA TUVE, Y ES CLAVE PARA ENTENDER LO BÁSICO DE WINDOWS:
+
+¿Qué pasa si recibes 10:02, 11:45, 10.15? pues son escenarios raros, pero ahí complementa el comando allowed lateness interval '40' minutes, la ventana
+se quedará esperando hasta 40 minutos para recibir eventos que cumplan con el estado del watermak del evento.
+
+Pero no es buena práctica poner lateness gigantes. Ahí entran otros conceptos. Con esto ya entiendes la base principal de los windows. Si
+un evento se te pierde debes volver a rebobinar el kafka por ejemplo, y tu sink debe encargarse de borrar duplicados, probablemente
+con los famosos streaming joins...
+
+Ta perro esta cosa jajajaja. Pero ya entendí este concepto. YYyyy, hay diferentes tipos de ventana también.
