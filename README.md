@@ -111,3 +111,14 @@ no viven dentro de flink, solo los procesa. Si quieres guardarlos debes definir 
 
 *Las funciones window te ayudan a mantener el orden pero sobre todo, en un stram infinito te ayudan a "batchear" en el save
 de acuerdo a intervalos de tiempo.
+
+
+# Avances 27/12/2025
+Esta cosa si requiere su tiempito para leer pero bueno, cuando pienses en general,todos tus datos deben traer timestamps, para
+identificar el orden de llegada de los mismos eventos. Estos te servirán para crear los diversos tipos de ventana en Flink.
+
+Estas fechas son conocidas como time attributes y debes declararlos al hacer tus sinks y sources.
+
+Hay dos tipos: processing time que son calculados por el System.currentTimeMilis(); y los evenmt time, los que vienen en tus datos.
+
+.... tengo que leer la docu con calma, los windows si quiero entenderlos bien
