@@ -156,3 +156,113 @@ un evento se te pierde debes volver a rebobinar el kafka por ejemplo, y tu sink 
 con los famosos streaming joins...
 
 Ta perro esta cosa jajajaja. Pero ya entendí este concepto. YYyyy, hay diferentes tipos de ventana también.
+
+Interesante aclaras, porque perdí dos horas investigando, TODOS TUS COMANDOS HAZLOS DESDE EL FOCKIN CONTAINER Job Manager.... No desde el taskmanager como yo lo intenté hacer :c
+
+Un mapa creado con chat gpt para recordarlo mejor, que fastidio
+
+Flink Cluster
+│
+├── JobManager (Coordinador / Master)
+│   ├─ Administra los Jobs
+│   │   ├─ Recibe SQL Queries / Jobs desde SQL Client o API
+│   │   ├─ Planifica tareas (tasks) para ejecutarlas en TaskManagers
+│   │   ├─ Controla checkpoints y estado de ventanas
+│   │   └─ Coordina failover si un TaskManager falla
+│   └─ Mantiene comunicación con TaskManagers
+│
+├── TaskManager(s) (Workers / Slaves)
+│   ├─ Ejecutan tareas reales del Job
+│   │   ├─ Lectura de fuentes (datagen, Kafka, archivos…)
+│   │   ├─ Transformaciones (map, filter, join, window, aggregate…)
+│   │   └─ Escritura en sinks (print, Kafka, DB, archivos…)
+│   ├─ Mantienen buffers de red y estados locales
+│   └─ Se reportan constantemente al JobManager
+│
+└── SQL Client / API / Job Submission
+    ├─ Envía jobs al JobManager
+    ├─ Consulta el estado de ejecución
+    └─ Puede recibir resultados de sinks tipo print o logs
+
+Recuerda, puedes hacer selects sobre el producer pero solo sobre lo que se va transmitiendo, aun no guardas nada, pero eso lo puedes convertir en un pre guardado desde el momento que pasan por el producer e insertarlo
+
+CREATE TABLE Orders (
+    order_number BIGINT,
+    price        DECIMAL(32,2),
+    buyer        varchar(60),
+    order_time   TIMESTAMP(3),
+    watermark for order_time as order_time - interval '5' second
+) WITH (
+  'connector' = 'datagen',
+  'rows-per-second' = '5'
+);
+
+CREATE TABLE demo_sym (
+  order_number BIGINT null,
+  price        DECIMAL(32,2) null,
+  buyer        varchar(60) null,
+  window_start TIMESTAMP(3) null,
+  window_end TIMESTAMP(3) null,
+  window_time TIMESTAMP(3) null
+) WITH (
+  'connector' = 'print'
+);
+
+insert into demo_sym SELECT order_number,price,buyer,window_start,window_end,window_time FROM TUMBLE(TABLE Orders, DESCRIPTOR(order_time),INTERVAL '30' MINUTES);
+
+
+INSERT INTO demo_sym
+SELECT
+  order_number,
+  price,
+  buyer,
+  null AS window_start,
+  null AS window_end,
+  null AS window_time
+FROM Orders;
+
+
+
+CREATE TABLE orders_synk (
+    order_number BIGINT,
+    price        DECIMAL(32,2),
+    buyer        varchar(60),
+    order_time   TIMESTAMP(3),
+    watermark for order_time as order_time - interval '5' second
+) WITH (
+  'connector' = 'print'
+);
+
+INSERT INTO orders_synk
+SELECT order_number, price, buyer, order_time
+FROM Orders;
+
+Con estos comandos lo practiqué, al ser datos aleatorios, es dificil agrupar porque no son datos repetidos. 
+
+<img width="2539" height="1439" alt="image" src="https://github.com/user-attachments/assets/e2fed413-aa83-44de-b82a-160c67c7ed28" />
+
+
+Como no quiero genera datasets aún, lo mejor es apoyarse sobre el ejemplo siguiente de la documentación:
+<img width="1093" height="946" alt="image" src="https://github.com/user-attachments/assets/35c47308-b26b-4a57-8f71-bd1fddef2321" />
+
+En este escenario, si tuvieras la necesidad de agrupar número de items que realizó un usuario por mes, agrupas por usuario y por item, y haces count
+de los items. Puedes generar la query que quieras y de manera continua. 
+
+RECUERDA: Watermark es el delay máximo entre elementos, el allows lateness (no existe esa instrucción nativamente en flink sql). El interval
+del tumbling es el calculo entre el primer timestamp y el último timestamp  para calcular hora o día. Con watermark sabes como cerrar la ventana,
+con tumble creas el tamaño de tus ventanas continuas:
+
+<img width="1167" height="685" alt="image" src="https://github.com/user-attachments/assets/6761e892-c162-4b02-b1ad-fc8ca41e3efd" />
+
+
+Con estos conceptos, debería estar más fresco, pero que dolor eh. Y el job continuará infinitamente.
+
+<img width="1501" height="1039" alt="image" src="https://github.com/user-attachments/assets/d36cfe79-513d-4a54-95c0-031e00059b17" />
+
+
+Otra cosa, rows-per-second y number-of-rows son anotaciones para simular velocidades de procesamiento. Es decir, la velocidad de tus datos.
+
+Y al ser uno o más trabajos infinitos, los verás y supervisarás desde tu dashboard 
+<img width="2116" height="437" alt="image" src="https://github.com/user-attachments/assets/f5f360cf-e081-4de0-a599-446d6adf6e88" />
+
+depende de como kafka te los mande, OJAZO.
