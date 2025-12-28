@@ -288,3 +288,81 @@ Y al ser uno o más trabajos infinitos, los verás y supervisarás desde tu dash
 <img width="2116" height="437" alt="image" src="https://github.com/user-attachments/assets/f5f360cf-e081-4de0-a599-446d6adf6e88" />
 
 depende de como kafka te los mande, OJAZO.
+
+
+# Pausa indefinida / conclusiones generales
+Vamos a dejarlo de lado no porque me cueste trabajo pero si veo que tiene una curva mediana-alta. Recrear escenarios me tomaría tiempito, porque significaria
+replicar un requerimiento y es4e tipo de actividades me aburren un poco. Además, debo prepararme para la prueba final, asi que dedicaré estos pocos dias a estudiar los pocos scripts
+que hice en leetcode y, ver si retomo o me chuto otros.
+
+
+Sin embargo el propósito de este repo hasta ahora fue absorver los conceptos básicos de esas herramientas ^^ y esto me hace sentirme orgullosisimo de mi.
+
+Por último antes de pasar a reflexiones finales sobre este camino, aclararemos los diferentes tipos de ventana, dominas las ventanas, menos dificil se haria
+probar más el flink:
+
+Tipos de ventana:
+
+TUMBLE: Cachitos por tiempo, rangos, como sub arrays de tiempo.
+
+Eventos:   10:00    10:02    10:08    10:15
+
+Ventanas: [10:00-10:05] [10:05-10:10] [10:10-10:15] [10:15-10:20]
+
+Count A:     2           1          0        1
+
+
+SLIDING: Como los algoritmos de sliding window, los datos ahí pueden chocar al pertener a un rango similar
+
+Eventos:   10:00    10:02    10:08    10:15
+
+Ventanas:
+
+[10:00-10:05]
+
+   [10:02-10:07]
+       
+       [10:04-10:09]
+      
+         [10:06-10:11]
+         
+            [10:08-10:13]
+            
+               [10:10-10:15]
+               
+Count A:   2          2          1          1          1          0
+
+
+CUMULATE: Como two pointers de leetcode, acomulas, logras una sumatoria de 0 a 5 mins, acomulando ventanas, y sigues con tu pointer.
+
+10:00 - 10:02   -> incluye 10:00       Count: 1
+
+10:00 - 10:04   -> incluye 10:00,10:02 Count: 2
+
+10:00 - 10:06   -> incluye 10:00,10:02,10:04 Count: 3
+
+10:02 - 10:04   -> incluye 10:02       Count: 1
+
+10:02 - 10:06   -> incluye 10:02,10:04 Count: 2
+
+10:04 - 10:06   -> incluye 10:04       Count: 1
+
+
+SESSION: ventanas independientes, midiendo tiempos de actividad e inactividad.
+
+Eventos:   10:00    10:02    10:08    10:15
+
+Ventanas:
+
+[10:00-10:07]   -> agrupa 10:00 y 10:02
+
+[10:08-10:13]   -> evento 10:08, nuevo gap
+
+[10:15-10:20]   -> evento 10:15, nuevo gap
+
+Count A:    2        1         1
+
+
+La datastream api la podemos estudiar despues.
+
+Con esto concluimos las pruebas pre posición, para la vacante que busco, he tenido entrevistas en google y amazon. Así que, estoy listo.
