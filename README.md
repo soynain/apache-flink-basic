@@ -162,27 +162,49 @@ Interesante aclaras, porque perdí dos horas investigando, TODOS TUS COMANDOS HA
 Un mapa creado con chat gpt para recordarlo mejor, que fastidio
 
 Flink Cluster
+
 │
+
 ├── JobManager (Coordinador / Master)
-│   ├─ Administra los Jobs
+
+│├─ Administra los Jobs
+
 │   │   ├─ Recibe SQL Queries / Jobs desde SQL Client o API
+
 │   │   ├─ Planifica tareas (tasks) para ejecutarlas en TaskManagers
+
 │   │   ├─ Controla checkpoints y estado de ventanas
+
 │   │   └─ Coordina failover si un TaskManager falla
+
 │   └─ Mantiene comunicación con TaskManagers
+
 │
+
 ├── TaskManager(s) (Workers / Slaves)
+
 │   ├─ Ejecutan tareas reales del Job
+
 │   │   ├─ Lectura de fuentes (datagen, Kafka, archivos…)
+
 │   │   ├─ Transformaciones (map, filter, join, window, aggregate…)
+
 │   │   └─ Escritura en sinks (print, Kafka, DB, archivos…)
+
 │   ├─ Mantienen buffers de red y estados locales
+
 │   └─ Se reportan constantemente al JobManager
+
 │
+
 └── SQL Client / API / Job Submission
+
     ├─ Envía jobs al JobManager
+    
     ├─ Consulta el estado de ejecución
+    
     └─ Puede recibir resultados de sinks tipo print o logs
+    
 
 Recuerda, puedes hacer selects sobre el producer pero solo sobre lo que se va transmitiendo, aun no guardas nada, pero eso lo puedes convertir en un pre guardado desde el momento que pasan por el producer e insertarlo
 
